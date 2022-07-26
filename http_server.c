@@ -120,8 +120,7 @@ void parser(int argc, char *argv[])
 			listen_port = atoi(optarg);
 			break;
 		case 'h':
-			printf("usage : https (-a listen address)\
- (-p listen port)\n");
+			printf("usage : https -a (host address)-p (host port)\n");
 			exit(0);
 		}
 	}
