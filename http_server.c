@@ -24,9 +24,13 @@ void close_server()
 	shutdown(sockfd, SHUT_RDWR);
 	close(sockfd);
 
-	while ((wpid = wait(&status)) > 0)
-		;
+	while ((wpid = wait(&status)) > 0);
 	exit(0);
+}
+
+void die(const char *err){
+        perror(err);
+        close_server();
 }
 
 void close_connection(int client_sock)
@@ -38,10 +42,9 @@ void close_connection(int client_sock)
 void send_data(int client_sock)
 {
 	char *data =
-		"HTTP/1.1 200 OK\r\n\r\n<html><body><h1>Hello</h1></body></html>";
-	if (send(client_sock, data, strlen(data), 0) < 0) {
+		"HTTP/1.1 200 OK\r\n\r\n<html><body><h1> HTTP Server</h1></body></html>";
+	if (send(client_sock, data, strlen(data), 0) < 0)
 		close_connection(client_sock);
-	}
 }
 
 void listen_data(int client_sock)
@@ -50,9 +53,9 @@ void listen_data(int client_sock)
 
 	while (1) {
 		memset(buffer, 0, BUFF_SIZE);
-		if (recv(client_sock, buffer, BUFF_SIZE, 0) <= 0) {
+		if (recv(client_sock, buffer, BUFF_SIZE, 0) <= 0)
 			break;
-		} else {
+		else {
 			printf("%s\n", buffer);
 			send_data(client_sock);
 			break;
@@ -71,11 +74,10 @@ void listen_connection()
 	while (1) {
 		client_sock = accept(sockfd, (struct sockaddr *)&conn,
 				     (socklen_t *)&len);
-		if (client_sock < 0) {
+		if (client_sock < 0)
 			close(client_sock);
-		} else if (fork() == 0) {
+		else if (fork() == 0)
 			listen_data(client_sock);
-		}
 		close(client_sock);
 	}
 }
@@ -93,23 +95,14 @@ int init_server()
 	server.sin_addr.s_addr = inet_addr(listen_address);
 	server.sin_port = htons(listen_port);
 
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("socket ");
-		return -1;
-	}
-	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) <
-	    0) {
-		perror("setsockopt ");
-		return -1;
-	}
-	if (bind(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0) {
-		perror("bind ");
-		return -1;
-	}
-	if (listen(sockfd, BACKLOG) < 0) {
-		perror("listen ");
-		return -1;
-	}
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		die("[ERROR] [socket] ");
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+		die("[ERROR] [setsockopt] ");
+	if (bind(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0)
+		die("[ERROR] [bind] ");
+	if (listen(sockfd, BACKLOG) < 0)
+		die("[ERROR] [listen] ");
 
 	return 1;
 }
@@ -138,9 +131,8 @@ int main(int argc, char *argv[])
 {
 	parser(argc, argv);
 
-	if (init_server() != 1) {
+	if (init_server() != 1)
 		return 0;
-	}
 	listen_connection();
 
 	return 0;
