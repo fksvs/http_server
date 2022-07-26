@@ -2,6 +2,7 @@ HTTP Server
 ---
 
 For now it can send only a small data, but you can change it from source code.
+__Go to function `send_data(int client_sock)` to change the data__ 
 
 #### compile:
     gcc http_server.c -o http_server
