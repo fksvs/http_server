@@ -9,4 +9,4 @@ compile:
 
 usage:
     ./http_server
-    open your browser and go to the specified host-address/port
+    open your browser and go to the specified host address-port
