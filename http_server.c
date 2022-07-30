@@ -1,19 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include <unistd.h>
 
 #define BUFF_SIZE 4096
 #define BACKLOG 10
 
+char data[BUFF_SIZE], html_data[BUFF_SIZE], *file_path = NULL;
+
 char *listen_address = "127.0.0.1";
 int listen_port = 8080;
+
 int sockfd;
 
 void close_server()
@@ -42,9 +47,7 @@ void close_connection(int client_sock)
 
 void send_data(int client_sock)
 {
-	char *data =
-		"HTTP/1.1 200 OK\r\n\r\n<html><body><h1> HTTP Server</h1></body></html>";
-	if (send(client_sock, data, strlen(data), 0) < 0)
+        if (send(client_sock, data, strlen(data), 0) < 0)
 		close_connection(client_sock);
 }
 
@@ -89,7 +92,7 @@ void init_server()
 	signal(SIGPIPE, SIG_IGN);
 
 	struct sockaddr_in server;
-	int enable = 1;
+	int fd,enable = 1;
 
 	memset(&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
@@ -104,7 +107,15 @@ void init_server()
 		die("[ERROR] [bind] ");
 	if (listen(sockfd, BACKLOG) < 0)
 		die("[ERROR] [listen] ");
-        
+
+        if ((fd = open(file_path, O_RDONLY)) == -1)
+                die("[ERROR] [open] ");
+        if (read(fd, html_data, BUFF_SIZE) == -1)
+                die("[ERROR] [read] ");
+        close(fd);
+
+        sprintf(data, "HTTP/1.1 200 OK\r\n\r\n%s",html_data);
+
         accept_connection();
 }
 
@@ -112,7 +123,7 @@ void parser(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "a:p:h")) != -1) {
+	while ((opt = getopt(argc, argv, "a:p:d:h")) != -1) {
 		switch (opt) {
 		case 'a':
 			listen_address = optarg;
@@ -120,8 +131,11 @@ void parser(int argc, char *argv[])
 		case 'p':
 			listen_port = atoi(optarg);
 			break;
+                case 'd':
+                        file_path = optarg;
+                        break;
 		case 'h':
-			printf("usage : https -a (host address) -p (host port)\n");
+			printf("usage : https -a (host address) -p (host port) -d (html file)\n");
 			exit(0);
 		}
 	}
