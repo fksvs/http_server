@@ -28,7 +28,8 @@ void close_server()
 	exit(0);
 }
 
-void die(const char *err){
+void die(const char *err)
+{
         perror(err);
         close_server();
 }
@@ -66,7 +67,7 @@ void listen_data(int client_sock)
 	exit(0);
 }
 
-void listen_connection()
+void accept_connection()
 {
 	struct sockaddr_in conn;
 	int client_sock, len = sizeof(struct sockaddr_in);
@@ -82,7 +83,7 @@ void listen_connection()
 	}
 }
 
-int init_server()
+void init_server()
 {
 	signal(SIGINT, close_server);
 	signal(SIGPIPE, SIG_IGN);
@@ -103,8 +104,8 @@ int init_server()
 		die("[ERROR] [bind] ");
 	if (listen(sockfd, BACKLOG) < 0)
 		die("[ERROR] [listen] ");
-
-	return 1;
+        
+        accept_connection();
 }
 
 void parser(int argc, char *argv[])
@@ -120,7 +121,7 @@ void parser(int argc, char *argv[])
 			listen_port = atoi(optarg);
 			break;
 		case 'h':
-			printf("usage : https -a (host address)-p (host port)\n");
+			printf("usage : https -a (host address) -p (host port)\n");
 			exit(0);
 		}
 	}
@@ -129,10 +130,7 @@ void parser(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	parser(argc, argv);
-
-	if (init_server() != 1)
-		return 0;
-	listen_connection();
+	init_server();
 
 	return 0;
 }
